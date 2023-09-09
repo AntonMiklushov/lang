@@ -1,0 +1,10 @@
+name a 15;
+name b 14;
+lable first;
+(a == b) ? {
+    name c a + b;
+} : {
+    name c a;
+};
+print(c);
+return 0;
