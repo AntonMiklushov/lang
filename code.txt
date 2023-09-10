@@ -1,10 +1,12 @@
 name a 15;
-name b 14;
+name b 10;
+name c 0;
 lable first;
 (a == b) ? {
-    name c a + b;
+    print("difference = ", c);
 } : {
-    name c a;
+    name c c + 1;
+    name b b + 1;
+    goto first;
 };
-print(c);
 return 0;

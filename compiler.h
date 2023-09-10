@@ -25,11 +25,10 @@ public:
         if (debug) std::cout << "Subblocks were found" << '\n';
         main_block->split_expressions();
         if (debug) std::cout << "Expressions were splited" << '\n';
-        main_block->find_lables();
-        if (debug) std::cout << "Lables were found" << '\n';
         main_block->find_floating_variables();
         if (debug) std::cout << "Floating variables found" << '\n';
-        main_block->reveal_expressions();
+        main_block->find_lables();
+        if (debug) std::cout << "Lables were found" << '\n';
         std::string output = main_block->execute();
         if (debug) std::cout << '\n' << "Execution completed" << '\n';
         auto stop = std::chrono::high_resolution_clock::now();
@@ -39,6 +38,5 @@ public:
             std::cout << "Execution duration: " << duration.count() << " milliseconds";
         }
         std::cout << '\n' << "Output: " << output << '\n';
-        main_block->reveal_expressions();
     }
 };

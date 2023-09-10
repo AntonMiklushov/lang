@@ -12,11 +12,12 @@ namespace lang
 {
     const auto body_regex = std::regex(R"(\{[^\{\}]*\})");
     const auto func_regex = std::regex(R"(func\s+(\(.*\)\s*\<body\:\d+\>))");
-    const auto integer_regex = std::regex(R"((\d+)[^>])");
+    const auto integer_regex = std::regex(R"((\d+)[^>\d])");
     const auto fractional_regex = std::regex();
     const auto string_regex = std::regex(R"(\"([^\"]*)\")");
     const auto naming_regex = std::regex(R"(\s*name\s+(\w+[^\s]*)\s+(.*);)");
     const auto lable_regex = std::regex(R"(lable\s+(\w+\d*))");
+    const auto goto_regex = std::regex(R"(goto\s+(\w+\d*))");
     const auto var_regex = std::regex(R"(\<variable\:(\d+)\>)");
     const auto list_regex = std::regex();
     const auto return_regex = std::regex(R"(return\s+<variable\:(\d+)>)");
@@ -55,7 +56,7 @@ private:
     uint floating_variables_count = 0;
     std::map<uint, VarHolder> variables;
     std::map<std::string, uint> names;
-    std::map<std::string, uint> lables;
+    std::map<std::string, std::pair<uint, std::vector<std::string>>> lables;
     bool returned = false;
     std::string return_value;
 
@@ -224,21 +225,20 @@ public:
         {
             b = put_variables(match[2].str());
             evaluate(b);
-            std::cout << "match: " << match.str() << '\n';
-            names.insert({match[1].str(), get_index(b)});
+            names.insert_or_assign(match[1].str(), get_index(b));
         }
     }
 
     void reveal_expressions()
     {
-        for (std::string exp: expressions) std::cout << exp << '\n';
+        for (int i = 0; i < expressions.size(); i++) std::cout << i << ":" << expressions[i] << '\n';
     }
 
     void reveal_lables()
     {
         for (auto &pair: lables)
         {
-            std::cout << pair.first << " at " << pair.second << '\n';
+            std::cout << pair.first << " at " << pair.second.first << '\n';
         }
     }
 
@@ -299,7 +299,7 @@ public:
         return buffer;
     }
 
-    void execute_funcitons(std::string exp)
+    void execute_functions(std::string exp)
     {
         std::regex re;
         std::smatch match;
@@ -318,7 +318,7 @@ public:
                 list = get_vars(arguments);
                 VarHolder out = func(VarHolder(list.first, list.second));
                 exp.replace(match.position(), match.length(), register_new_variable(out));
-                execute_funcitons(exp);
+                execute_functions(exp);
             }
         }
     }
@@ -347,12 +347,15 @@ public:
     {
         std::smatch match;
         std::string exp;
+        std::vector<std::string> buffer;
         for (uint i = 0; i < expressions.size(); i++)
         {
-            exp = expressions[i];
-            if (std::regex_search(exp, match, lable_regex))
+            if (std::regex_search(expressions[i], match, lable_regex) && (lables.find(match[1]) == lables.end()))
             {
-                lables.insert({match[1], i});
+                buffer = std::vector<std::string>(expressions);
+                auto first = buffer.begin() + i + 1;
+                auto last = buffer.end();
+                lables.insert({match[1], std::pair<uint, std::vector<std::string>>({i, std::vector<std::string>(first, last)})});
             }
         }
     }
@@ -371,7 +374,7 @@ public:
             clause = find_border_bracket(match[1].str());
             cl = clause.length();
             clause = put_variables(clause);
-            execute_funcitons(clause);
+            execute_functions(clause);
             evaluate(clause);
             v = get_vars(clause).first[0];
             p = match[1].length() - cl;
@@ -386,8 +389,26 @@ public:
         }
     }
 
-    void check_for_goto()
-    {}
+    uint check_for_goto(uint i)
+    {
+        std::smatch match;
+        std::vector<std::string> buffer;
+        std::vector<std::string>::iterator i0, i1, i2, i3;
+        std::pair<uint, std::vector<std::string>> pair;
+        if (std::regex_search(expressions[i], match, goto_regex))
+        {
+            pair = lables.at(match[1]);
+            i0 = expressions.begin();
+            i1 = expressions.begin() + pair.first + 1;
+            i2 = pair.second.begin();
+            i3 = pair.second.end();
+            buffer = std::vector<std::string>(i0, i1);
+            buffer.insert(buffer.end(), i2, i3);
+            expressions = std::vector<std::string>(buffer);
+            return pair.first + 1;
+        }
+        return i;
+    }
 
     void recompile()
     {
@@ -399,14 +420,18 @@ public:
 
     std::string execute()
     {
+        uint k;
         for (int i = 0; i < expressions.size(); i++)
         {
-            std::string &exp = expressions[i];
-            if (check_for_return(exp)) return return_value;
-            execute_ternaries(exp);
-            execute_funcitons(exp);
-            std::cout << "exp" << exp << '\n';
-            find_name(exp);
+            if (check_for_return(expressions[i])) return return_value;
+            if (i == (k = check_for_goto(i)))
+            {
+                execute_ternaries(expressions[i]);
+                execute_functions(expressions[i]);
+                find_name(expressions[i]);
+            } else {
+                i = k - 1;
+            }
         }
         return "";
     }
