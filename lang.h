@@ -21,7 +21,7 @@ namespace lang
     const auto var_regex = std::regex(R"(\<variable\:(\d+)\>)");
     const auto list_regex = std::regex();
     const auto return_regex = std::regex(R"(return\s+<variable\:(\d+)>)");
-    const auto ternary_regex = std::regex(R"(\((.*)\)\s*\?\s*<body\:(\d)>\s*\:\s*<body\:(\d)>)");
+    const auto ternary_regex = std::regex(R"(\((.*)\)\s*\?\s*<body\:(\d+)>\s*\:\s*<body\:(\d+)>)");
     const uint ADDITION_ID = 0;
     const uint SUBSTRACTION_ID = 1;
     const uint MULTIPLICATION_ID = 2;
@@ -160,6 +160,7 @@ public:
         uint out[] = {0, 0};
         while(match_blocks(code_buffer, out))
         {
+
             match = code_buffer.substr(out[0], out[1]);
             subblocks.insert({subblock_count, code_block(match, *this)});
             body_text.replace(6, body_text.length() - 7, std::to_string(subblock_count));
@@ -173,27 +174,12 @@ public:
     {
         std::string match;
         std::string buffer = code;
+        expressions.clear();
         while(match_expression(buffer, &match))
         {
             expressions.push_back(match);
             buffer.replace(0, match.length(), "");
         }
-    }
-
-    void resplit_expressions()
-    {
-        std::string match;
-        std::vector<std::string> collection;
-        for (auto it = begin (expressions); it != end (expressions); ++it)
-        {
-            std::string buffer = it->data();
-            while(match_expression(buffer, &match))
-            {
-                collection.push_back(match);
-                buffer.replace(0, match.length(), "");
-            }
-        }
-        expressions = collection;
     }
 
     void find_floating_variables()
@@ -257,6 +243,11 @@ public:
         for (auto &pair: names) std::cout << pair.first << ":" << variables[pair.second].get_var()->get_content() << '\n';
     }
 
+    void reveal_subblocks()
+    {
+        for (auto pair: subblocks) std::cout << pair.first << pair.second.get_code() << '\n';
+    }
+
     std::pair<VarHolder*, uint> get_vars(std::string vars)
     {
         VarHolder* collection;
@@ -299,7 +290,7 @@ public:
         return buffer;
     }
 
-    void execute_functions(std::string exp)
+    void execute_functions(std::string &exp)
     {
         std::regex re;
         std::smatch match;
@@ -360,7 +351,7 @@ public:
         }
     }
 
-    void execute_ternaries(std::string &exp)
+    bool execute_ternaries(std::string &exp)
     {
         std::smatch match;
         std::string clause;
@@ -386,7 +377,9 @@ public:
         if (found)
         {
             recompile();
+            return true;
         }
+        return false;
     }
 
     uint check_for_goto(uint i)
@@ -410,10 +403,18 @@ public:
         return i;
     }
 
+    void restore_code()
+    {
+        std::string buffer = "";
+        for (auto exp: expressions) buffer += exp;
+        this->code = buffer;
+    }
+
     void recompile()
     {
+        restore_code();
         find_subblocks();
-        resplit_expressions();
+        split_expressions();
         find_lables();
         find_floating_variables();
     }
@@ -426,7 +427,7 @@ public:
             if (check_for_return(expressions[i])) return return_value;
             if (i == (k = check_for_goto(i)))
             {
-                execute_ternaries(expressions[i]);
+                while(execute_ternaries(expressions[i]));
                 execute_functions(expressions[i]);
                 find_name(expressions[i]);
             } else {
