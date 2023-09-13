@@ -4,11 +4,7 @@
 #include <regex>
 #include <unordered_map>
 
-const unsigned int INTEGER_ID = 0;
-const unsigned int FRACTIONAL_ID = 1;
-const unsigned int STRING_ID = 2;
-const unsigned int FUNCTION_ID = 3;
-const unsigned int LIST_ID = 4;
+enum {INTEGER_ID, FRACTIONAL_ID, STRING_ID, FUNCTION_ID, LIST_ID};
 
 class VarHolder
 {

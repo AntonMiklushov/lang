@@ -23,6 +23,6 @@ int main(int argc, char* argv[])
     for(int i = 0; i < lines.size(); i++) comp_string_stream << lines[i];
     comp_string_stream << "}";
     const std::string code = comp_string_stream.str();
-    compiler* com = new compiler(code, true);
+    compiler* com = new compiler(code, false);
     return 0;
 }

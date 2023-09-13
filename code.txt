@@ -1,4 +1,4 @@
-name n integer(input());
+name n 40;
 name a 0;
 name b 1;
 name c 1;

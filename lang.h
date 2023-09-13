@@ -22,11 +22,7 @@ namespace lang
     const auto list_regex = std::regex();
     const auto return_regex = std::regex(R"(return\s+<variable\:(\d+)>)");
     const auto ternary_regex = std::regex(R"(\((.*)\)\s*\?\s*<body\:(\d+)>\s*\:\s*<body\:(\d+)>)");
-    const uint ADDITION_ID = 0;
-    const uint SUBSTRACTION_ID = 1;
-    const uint MULTIPLICATION_ID = 2;
-    const uint DIVISION_ID = 3;
-    const uint ISEQUAL_ID = 4;
+    enum {ADDITION_ID, SUBSTRACTION_ID, MULTIPLICATION_ID, DIVISION_ID, ISEQUAL_ID};
 
     std::map<std::string, std::regex> type_regex_map = {
         {"string", string_regex},
@@ -38,6 +34,7 @@ namespace lang
     
     // Order DOES matter
     std::map<uint, std::regex> operations = {
+        {ISEQUAL_ID, std::regex(R"((<variable:\d+>)\s*\==\s*(<variable:\d+>))")},
         {ISEQUAL_ID, std::regex(R"((<variable:\d+>)\s*\==\s*(<variable:\d+>))")},
         {MULTIPLICATION_ID, std::regex(R"((<variable:\d+>)\s*\*\s*(<variable:\d+>))")},
         {DIVISION_ID, std::regex(R"((<variable:\d+>)\s*\/\s*(<variable:\d+>))")},
