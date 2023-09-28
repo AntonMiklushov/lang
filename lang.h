@@ -12,6 +12,7 @@ namespace lang
 {
     const auto body_regex = std::regex(R"(\{[^\{\}]*\})");
     const auto func_regex = std::regex(R"(func\s+(\(.*\)\s*\<body\:\d+\>))");
+    const auto func_call_regex = std::regex(R"(<variable\:(\d+)>\s*\(([^\(\)]*)\))");
     const auto integer_regex = std::regex(R"((\d+)[^>\d])");
     const auto fractional_regex = std::regex();
     const auto string_regex = std::regex(R"(\"([^\"]*)\")");
@@ -54,6 +55,7 @@ private:
     std::map<uint, VarHolder> variables;
     std::map<std::string, uint> names;
     std::map<std::string, std::pair<uint, std::vector<std::string>>> lables;
+    std::map<std::string, uint> functions;
     bool returned = false;
     std::string return_value;
 
@@ -204,12 +206,20 @@ public:
     {
         std::smatch match;
         std::string b;
+        uint index;
         if (std::regex_search(exp, match, naming_regex))
         {
             b = put_variables(match[2].str());
             evaluate(b);
-            names.insert_or_assign(match[1].str(), get_index(b));
+            index = get_index(b);
+            if (variables.at(index).get_type() == FUNCTION_ID) functions.insert_or_assign(match[1].str(), index);
+            else names.insert_or_assign(match[1].str(), index);
         }
+    }
+
+    void reveal_functions()
+    {
+        for (auto &pair: functions) std::cout << pair.first << ":" << pair.second << '\n';
     }
 
     void reveal_expressions()
@@ -308,6 +318,10 @@ public:
                 exp.replace(match.position(), match.length(), register_new_variable(out));
                 execute_functions(exp);
             }
+        }
+        if (std::regex_search(exp, match, func_call_regex))
+        {
+            auto pair = names;//////////////////////////////////////////////////////////////////////////////////////////////////////
         }
     }
 
@@ -456,8 +470,10 @@ public:
                     exp.replace(match.position(), match.length(), register_new_variable(vars[0] + vars[1]));
                     break;
                 case SUBSTRACTION_ID:
+                    exp.replace(match.position(), match.length(), register_new_variable(vars[0] - vars[1]));
                     break;
                 case MULTIPLICATION_ID:
+                    exp.replace(match.position(), match.length(), register_new_variable(vars[0] * vars[1]));
                     break;
                 case DIVISION_ID:
                     break;

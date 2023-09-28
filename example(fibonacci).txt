@@ -1,0 +1,33 @@
+name n 40;
+name a 0;
+name b 1;
+name c 1;
+name t 1;
+name m 0;
+print("Sequence");
+lable first;
+(n == m) ? {
+    goto end;
+} : {
+    (t == 1) ? {
+        name a b + c;
+        name t 2;
+        print(a);
+    } : {
+        (t == 2) ? {
+            name b a + c;
+            name t 3;
+            print(b);
+        } : {
+            (t == 3) ? {
+                name c a + b;
+                name t 1;
+                print(c);
+            } : {};
+        };
+    };
+    name m m + 1;
+    goto first;
+};
+lable end;
+return 0;

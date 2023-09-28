@@ -38,5 +38,6 @@ public:
             std::cout << "Execution duration: " << duration.count() << " milliseconds";
         }
         std::cout << '\n' << "Output: " << output << '\n';
+        main_block->reveal_expressions();
     }
 };

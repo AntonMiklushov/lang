@@ -230,6 +230,42 @@ public:
         return VarHolder();
     }
 
+    VarHolder operator -(const VarHolder& v)
+    {
+        switch (this->type)
+        {
+        case INTEGER_ID:
+            switch (v.type)
+            {
+            case INTEGER_ID:
+                return VarHolder(
+                    new integer(std::to_string(std::stoi(this->var->get_content()) - std::stoi(v.var->get_content()))),
+                    INTEGER_ID
+                );
+            }
+            break;
+        }
+        return VarHolder();
+    }
+
+    VarHolder operator *(const VarHolder& v)
+    {
+        switch (this->type)
+        {
+        case INTEGER_ID:
+            switch (v.type)
+            {
+            case INTEGER_ID:
+                return VarHolder(
+                    new integer(std::to_string(std::stoi(this->var->get_content()) * std::stoi(v.var->get_content()))),
+                    INTEGER_ID
+                );
+            }
+            break;
+        }
+        return VarHolder();
+    }
+
     VarHolder operator ==(const VarHolder& v)
     {
         if (this->var->get_content() == v.var->get_content()) return VarHolder(INTEGER_ID, "1");
