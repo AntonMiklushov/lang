@@ -1,4 +1,4 @@
-name sq func(a){return a * a;};
+name mul func(a, b){return a * b;};
 name a 12;
-print(sq(a));
+print(mul(a, 5));
 return 0;

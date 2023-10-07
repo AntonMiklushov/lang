@@ -16,7 +16,6 @@ private:
         std::string content;
     public:
         virtual std::string get_content() const {return content;};
-        virtual VarHolder process(VarHolder) const = 0;
         virtual VarHolder* get_collection() const = 0;
         virtual unsigned int get_length() const = 0;
     };
@@ -28,7 +27,6 @@ private:
         {
             this->content = content;
         }
-        VarHolder process(VarHolder v) const override {return VarHolder();}
         VarHolder* get_collection() const override {return new VarHolder();}
         unsigned int get_length() const override {return 0;}
     };
@@ -37,7 +35,6 @@ private:
     {
     public:
         fractional(std::string content) {}
-        VarHolder process(VarHolder v) const override {return VarHolder();}
         VarHolder* get_collection() const override {return new VarHolder();}
         unsigned int get_length() const override {return 0;}
     };
@@ -49,7 +46,6 @@ private:
         {
             this->content = content;
         }
-        VarHolder process(VarHolder v) const override {return VarHolder();}
         VarHolder* get_collection() const override {return new VarHolder();}
         unsigned int get_length() const override {return 0;}
     };
@@ -64,7 +60,6 @@ private:
     public:
         function(variable* v)
         {
-            content = v->get_content();
             std::smatch match;
             std::regex_match(content, match, std::regex(R"(\((\D+)\)\<(.+)\>)"));
             this->content = std::string("<function(") + match[1].str()
@@ -76,10 +71,6 @@ private:
             std::regex_match(content, match, std::regex(R"(\((.*)\)\s*\<body\:(.+)\>)"));
             this->content = std::string("<function(") + match[1].str()
             + std::string(")<body:") + match[2].str() + std::string(">>");
-        }
-        VarHolder process(VarHolder vars) const override
-        {
-            return VarHolder();
         }
         std::string get_content() const override
         {
@@ -111,8 +102,6 @@ private:
         {
             return content;
         }
-
-        VarHolder process(VarHolder v) const override {return VarHolder();}
 
         unsigned int get_length() const override
         {

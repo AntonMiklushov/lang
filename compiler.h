@@ -39,5 +39,6 @@ public:
         }
         std::cout << '\n' << "Output: " << output << '\n';
         main_block->reveal_expressions();
+        main_block->reveal_names();
     }
 };

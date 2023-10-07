@@ -11,7 +11,8 @@ typedef unsigned int uint;
 namespace lang
 {
     const auto body_regex = std::regex(R"(\{[^\{\}]*\})");
-    const auto func_regex = std::regex(R"(func\s+(\(.*\)\s*\<body\:\d+\>))");
+    const auto func_regex = std::regex(R"(func\s*(\(.*\)\s*\<body\:\d+\>))");
+    const auto func_content_regex = std::regex(R"(<function:\(\D+\)><body:\d+>)");
     const auto func_call_regex = std::regex(R"(<variable\:(\d+)>\s*\(([^\(\)]*)\))");
     const auto integer_regex = std::regex(R"((\d+)[^>\d])");
     const auto fractional_regex = std::regex();
@@ -36,7 +37,6 @@ namespace lang
     // Order DOES matter
     std::map<uint, std::regex> operations = {
         {ISEQUAL_ID, std::regex(R"((<variable:\d+>)\s*\==\s*(<variable:\d+>))")},
-        {ISEQUAL_ID, std::regex(R"((<variable:\d+>)\s*\==\s*(<variable:\d+>))")},
         {MULTIPLICATION_ID, std::regex(R"((<variable:\d+>)\s*\*\s*(<variable:\d+>))")},
         {DIVISION_ID, std::regex(R"((<variable:\d+>)\s*\/\s*(<variable:\d+>))")},
         {ADDITION_ID, std::regex(R"((<variable:\d+>)\s*\+\s*(<variable:\d+>))")},
@@ -55,7 +55,6 @@ private:
     std::map<uint, VarHolder> variables;
     std::map<std::string, uint> names;
     std::map<std::string, std::pair<uint, std::vector<std::string>>> lables;
-    std::map<std::string, uint> functions;
     bool returned = false;
     std::string return_value;
 
@@ -129,6 +128,14 @@ private:
         return str;
     }
 
+    const uint find_from_func_content(std::string s, std::string& vars) const
+    {
+        std::smatch match;
+        std::regex_match(s, match, func_content_regex);
+        vars = match[1];
+        return std::stoi(match[2]);
+    }
+
 public:
 
     std::string get_code()
@@ -141,13 +148,12 @@ public:
         this->code = code.substr(1, code.length() - 2);
     }
 
-    code_block(std::string code, code_block father)
+    void inherit_names(code_block* father)
     {
-        this->code = code.substr(1, code.length() - 2);
-        for (auto pair: father.names)
+        for (auto pair: father->names)
         {
             this->names.insert({pair.first,this->floating_variables_count});
-            this->register_new_variable(father.variables.at(pair.second));
+            this->register_new_variable(father->variables.at(pair.second));
         }
     }
     
@@ -161,7 +167,7 @@ public:
         {
 
             match = code_buffer.substr(out[0], out[1]);
-            subblocks.insert({subblock_count, code_block(match, *this)});
+            subblocks.insert({subblock_count, code_block(match)});
             body_text.replace(6, body_text.length() - 7, std::to_string(subblock_count));
             code_buffer.replace(out[0], out[1], body_text);
             subblock_count++;
@@ -212,14 +218,8 @@ public:
             b = put_variables(match[2].str());
             evaluate(b);
             index = get_index(b);
-            if (variables.at(index).get_type() == FUNCTION_ID) functions.insert_or_assign(match[1].str(), index);
-            else names.insert_or_assign(match[1].str(), index);
+            names.insert_or_assign(match[1].str(), index);
         }
-    }
-
-    void reveal_functions()
-    {
-        for (auto &pair: functions) std::cout << pair.first << ":" << pair.second << '\n';
     }
 
     void reveal_expressions()
@@ -319,9 +319,25 @@ public:
                 execute_functions(exp);
             }
         }
-        if (std::regex_search(exp, match, func_call_regex))
+        // todo
+        for (auto &pair: names)
         {
-            auto pair = names;//////////////////////////////////////////////////////////////////////////////////////////////////////
+            std::cout << pair.first << '\n';
+            if (variables[pair.second].get_type() == FUNCTION_ID)
+            {
+                re_template.replace(0, re_template.length() - template_length, pair.first);
+                if (std::regex_search(exp, match, std::regex(re_template)))
+                {
+                    arguments = put_variables(match[1].str());
+                    std::string inputs;
+                    code_block *body = new code_block(subblocks.at(find_from_func_content(variables.at(pair.second).get_var()->get_content(), inputs)).code);
+                    body->inherit_names(this);
+                    body->find_subblocks();
+                    evaluate(arguments);
+                    list = get_vars(arguments);
+                    std::cout<<inputs;
+                }
+            }
         }
     }
 
