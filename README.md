@@ -1,7 +1,7 @@
 # What it is
 
 This project was made mostly for learning c++, it is slow and inefficient,
-but it does work. I would call it some kind of interpreter. Honestly it was
+but it does work. (kind of) I would call it some kind of interpreter. Honestly it was
 much more complex task than I thought.
 
 # Syntax
